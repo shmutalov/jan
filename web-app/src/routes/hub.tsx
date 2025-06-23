@@ -31,7 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { addModelSource, downloadModel, fetchModelHub } from '@/services/models'
+import { addModelSource, fetchModelHub, pullModel } from '@/services/models'
 import { useDownloadStore } from '@/hooks/useDownloadStore'
 import { Progress } from '@/components/ui/progress'
 import HeaderPage from '@/containers/HeaderPage'
@@ -82,7 +82,7 @@ function Hub() {
   const hasTriggeredDownload = useRef(false)
 
   const { getProviderByName } = useModelProvider()
-  const llamaProvider = getProviderByName('llama.cpp')
+  const llamaProvider = getProviderByName('llamacpp')
 
   const toggleModelExpansion = (modelId: string) => {
     setExpandedModels((prev) => ({
@@ -211,7 +211,7 @@ function Hub() {
         search: {
           model: {
             id: modelId,
-            provider: 'llama.cpp',
+            provider: 'llamacpp',
           },
         },
       })
@@ -255,7 +255,7 @@ function Hub() {
           ) : (
             <Button
               size="sm"
-              onClick={() => downloadModel(modelId)}
+              onClick={() => pullModel(modelId, modelId)}
               className={cn(isDownloading && 'hidden')}
               ref={isRecommended ? downloadButtonRef : undefined}
             >
@@ -608,7 +608,7 @@ function Hub() {
                                             className="size-6 cursor-pointer flex items-center justify-center rounded hover:bg-main-view-fg/10 transition-all duration-200 ease-in-out"
                                             title="Download model"
                                             onClick={() =>
-                                              downloadModel(variant.id)
+                                              pullModel(variant.id, variant.id)
                                             }
                                           >
                                             <IconDownload

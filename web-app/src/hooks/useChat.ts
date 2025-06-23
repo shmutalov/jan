@@ -112,15 +112,11 @@ export const useChat = () => {
   ])
 
   const restartModel = useCallback(
-    async (
-      provider: ProviderObject,
-      modelId: string,
-      abortController: AbortController
-    ) => {
+    async (provider: ProviderObject, modelId: string) => {
       await stopAllModels()
       await new Promise((resolve) => setTimeout(resolve, 1000))
       updateLoadingModel(true)
-      await startModel(provider, modelId, abortController).catch(console.error)
+      await startModel(provider, modelId).catch(console.error)
       updateLoadingModel(false)
       await new Promise((resolve) => setTimeout(resolve, 1000))
     },
@@ -128,11 +124,7 @@ export const useChat = () => {
   )
 
   const increaseModelContextSize = useCallback(
-    async (
-      modelId: string,
-      provider: ProviderObject,
-      controller: AbortController
-    ) => {
+    async (modelId: string, provider: ProviderObject) => {
       /**
        * Should increase the context size of the model by 2x
        * If the context size is not set or too low, it defaults to 8192.
@@ -177,8 +169,7 @@ export const useChat = () => {
         })
       }
       const updatedProvider = getProviderByName(provider.provider)
-      if (updatedProvider)
-        await restartModel(updatedProvider, model.id, controller)
+      if (updatedProvider) await restartModel(updatedProvider, model.id)
 
       console.log(
         updatedProvider?.models.find((e) => e.id === model.id)?.settings
@@ -189,11 +180,7 @@ export const useChat = () => {
     [getProviderByName, restartModel, updateProvider]
   )
   const toggleOnContextShifting = useCallback(
-    async (
-      modelId: string,
-      provider: ProviderObject,
-      controller: AbortController
-    ) => {
+    async (modelId: string, provider: ProviderObject) => {
       const providerName = provider.provider
       const newSettings = [...provider.settings]
       const settingKey = 'context_shift'
@@ -219,8 +206,7 @@ export const useChat = () => {
         ...updateObj,
       })
       const updatedProvider = getProviderByName(providerName)
-      if (updatedProvider)
-        await restartModel(updatedProvider, modelId, controller)
+      if (updatedProvider) await restartModel(updatedProvider, modelId)
       return updatedProvider
     },
     [updateProvider, getProviderByName, restartModel]
@@ -251,11 +237,9 @@ export const useChat = () => {
       try {
         if (selectedModel?.id) {
           updateLoadingModel(true)
-          await startModel(
-            activeProvider,
-            selectedModel.id,
-            abortController
-          ).catch(console.error)
+          await startModel(activeProvider, selectedModel.id).catch(
+            console.error
+          )
           updateLoadingModel(false)
         }
 
@@ -291,10 +275,6 @@ export const useChat = () => {
             availableTools,
             currentAssistant.parameters?.stream === false ? false : true,
             currentAssistant.parameters as unknown as Record<string, object>
-            // TODO: replace it with according provider setting later on
-            // selectedProvider === 'llama.cpp' && availableTools.length > 0
-            //   ? false
-            //   : true
           )
 
           if (!completion) throw new Error('No completion received')
@@ -303,7 +283,8 @@ export const useChat = () => {
           const toolCalls: ChatCompletionMessageToolCall[] = []
           try {
             if (isCompletionResponse(completion)) {
-              accumulatedText = completion.choices[0]?.message?.content || ''
+              accumulatedText =
+                (completion.choices[0]?.message?.content as string) || ''
               if (completion.choices[0]?.message?.tool_calls) {
                 toolCalls.push(...completion.choices[0].message.tool_calls)
               }
@@ -370,16 +351,14 @@ export const useChat = () => {
                 /// Increase context size
                 activeProvider = await increaseModelContextSize(
                   selectedModel.id,
-                  activeProvider,
-                  abortController
+                  activeProvider
                 )
                 continue
               } else if (method === 'context_shift' && selectedModel?.id) {
                 /// Enable context_shift
                 activeProvider = await toggleOnContextShifting(
                   selectedModel?.id,
-                  activeProvider,
-                  abortController
+                  activeProvider
                 )
                 continue
               } else throw error
@@ -392,7 +371,7 @@ export const useChat = () => {
             accumulatedText.length === 0 &&
             toolCalls.length === 0 &&
             activeThread.model?.id &&
-            activeProvider.provider === 'llama.cpp'
+            provider?.provider === 'llamacpp'
           ) {
             await stopModel(activeThread.model.id, 'cortex')
             throw new Error('No response received from the model')

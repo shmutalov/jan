@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch'
 import { open } from '@tauri-apps/plugin-dialog'
 import {
   getActiveModels,
-  importModel,
+  pullModel,
   startModel,
   stopAllModels,
   stopModel,
@@ -246,7 +246,7 @@ function ProviderDetail() {
                 className={cn(
                   'flex flex-col gap-3',
                   provider &&
-                    provider.provider === 'llama.cpp' &&
+                    provider.provider === 'llamacpp' &&
                     'flex-col-reverse'
                 )}
               >
@@ -359,7 +359,7 @@ function ProviderDetail() {
                         Models
                       </h1>
                       <div className="flex items-center gap-2">
-                        {provider && provider.provider !== 'llama.cpp' && (
+                        {provider && provider.provider !== 'llamacpp' && (
                           <>
                             {!predefinedProviders.some(
                               (p) => p.provider === provider.provider
@@ -394,7 +394,7 @@ function ProviderDetail() {
                             <DialogAddModel provider={provider} />
                           </>
                         )}
-                        {provider && provider.provider === 'llama.cpp' && (
+                        {provider && provider.provider === 'llamacpp' && (
                           <Button
                             variant="link"
                             size="sm"
@@ -410,10 +410,15 @@ function ProviderDetail() {
                                   },
                                 ],
                               })
+                              // If the dialog returns a file path, extract just the file name
+                              const fileName =
+                                typeof selectedFile === 'string'
+                                  ? selectedFile.split(/[\\/]/).pop()
+                                  : undefined
 
-                              if (selectedFile) {
+                              if (selectedFile && fileName) {
                                 try {
-                                  await importModel(selectedFile)
+                                  await pullModel(fileName, selectedFile)
                                 } catch (error) {
                                   console.error(
                                     'Failed to import model:',

@@ -22,11 +22,11 @@ export enum DefaultToolUseSupportedModels {
 }
 
 export type ActiveModel = {
-  engine: string
+  engine?: string
   id: string
-  model_size: number
+  model_size?: number
   object: 'model'
-  ram: number
-  start_time: number
-  vram: number
+  ram?: number
+  start_time?: number
+  vram?: number
 }
